@@ -9,6 +9,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Run Infracost
-        uses: infracost/infracost-gh-action@v1
+        uses: infracost/infracost-gh-action@v2
         with:
-          path: /path/to/your/terraform
+          path: terraform
