@@ -1,0 +1,14 @@
+name: Infra Cost Action
+on:
+  pull_request:
+  
+jobs:
+  infracost:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Run Infracost
+        uses: infracost/infracost-gh-action@v1
+        with:
+          path: /path/to/your/terraform
