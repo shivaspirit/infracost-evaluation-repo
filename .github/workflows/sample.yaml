@@ -3,12 +3,72 @@ on:
   pull_request:
   
 jobs:
-  infracost:
+  infracost-json:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Run Infracost
-        uses: infracost/actions/setup@v3
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
         with:
-          path: terraform
+          fetch-depth: 0 # Needed so diff works with base branch
+
+      - name: Install Infracost
+        run: curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
+
+      - name: Authenticate with Infracost
+        run: infracost auth login --api-key ${{ secrets.INFRACOST_API_KEY }}
+
+      # 1️⃣ Breakdown JSON for current branch
+      - name: Infracost breakdown (current branch)
+        run: |
+          infracost breakdown \
+            --path . \
+            --format json \
+            --out-file infracost-breakdown.json
+          echo "===== BREAKDOWN JSON ====="
+          cat infracost-breakdown.json
+
+      # 2️⃣ Diff JSON (current branch vs base branch)
+      - name: Infracost diff (PR vs base branch)
+        run: |
+          infracost diff \
+            --path . \
+            --format json \
+            --out-file infracost-diff.json
+          echo "===== DIFF JSON ====="
+          cat infracost-diff.json
+
+      # 3️⃣ Breakdown with usage file JSON
+      - name: Infracost breakdown with usage file
+        if: ${{ hashFiles('infracost-usage.yml') != '' }}
+        run: |
+          infracost breakdown \
+            --path . \
+            --usage-file infracost-usage.yml \
+            --format json \
+            --out-file infracost-breakdown-usage.json
+          echo "===== BREAKDOWN + USAGE FILE JSON ====="
+          cat infracost-breakdown-usage.json
+
+      # 4️⃣ Diff with usage file JSON
+      - name: Infracost diff with usage file
+        if: ${{ hashFiles('infracost-usage.yml') != '' }}
+        run: |
+          infracost diff \
+            --path . \
+            --usage-file infracost-usage.yml \
+            --format json \
+            --out-file infracost-diff-usage.json
+          echo "===== DIFF + USAGE FILE JSON ====="
+          cat infracost-diff-usage.json
+
+      # 5️⃣ (Optional) Upload JSON files as GitHub Actions artifacts
+      - name: Upload Infracost JSON artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: infracost-json-files
+          path: |
+            infracost-breakdown.json
+            infracost-diff.json
+            infracost-breakdown-usage.json
+            infracost-diff-usage.json
