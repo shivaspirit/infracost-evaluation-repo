@@ -28,16 +28,30 @@ jobs:
           echo "===== BREAKDOWN JSON ====="
           cat infracost-breakdown.json
 
-      # 2️⃣ Diff JSON (current branch vs base branch)
-      - name: Infracost diff (PR vs base branch)
+      # #  Generate baseline from main branch
+      - name: Generate baseline (main branch)
+        run: |
+          git checkout origin/main
+          infracost breakdown \
+            --path . \
+            --format json \
+            --out-file infracost-base.json
+
+      # 2️⃣ Switch back to PR branch
+      - name: Checkout PR branch again
+        run: git checkout -
+
+      # 3️⃣ Generate diff JSON
+      - name: Generate diff JSON
         run: |
           infracost diff \
             --path . \
+            --compare-to infracost-base.json \
             --format json \
             --out-file infracost-diff.json
           echo "===== DIFF JSON ====="
           cat infracost-diff.json
-
+          
       # 3️⃣ Breakdown with usage file JSON
       - name: Infracost breakdown with usage file
         if: ${{ hashFiles('infracost-usage.yml') != '' }}
