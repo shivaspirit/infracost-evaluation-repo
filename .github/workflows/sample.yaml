@@ -16,7 +16,7 @@ jobs:
         run: curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
 
       - name: Authenticate with Infracost
-        run: infracost auth login --api-key ${{ secrets.INFRACOST_API_KEY }}
+        run: infracost configure set api_key ${{ secrets.INFRACOST_API_KEY }}
 
       # 1️⃣ Breakdown JSON for current branch
       - name: Infracost breakdown (current branch)
